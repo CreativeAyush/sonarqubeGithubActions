@@ -1,0 +1,39 @@
+# .github/workflows/sonarqube-c-cpp.yml
+
+name: SonarQube Scan for C / C++ / Objective-C
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install SonarQube Build Wrapper
+        run: |
+          curl -sSLo build-wrapper-linux-x86.zip https://binaries.sonarsource.com/Distribution/build-wrapper-linux-x86/build-wrapper-linux-x86.zip
+          unzip build-wrapper-linux-x86.zip
+
+      - name: Install SonarScanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+          unzip sonar-scanner.zip
+
+      - name: Build project with build-wrapper
+        run: |
+          mkdir build
+          mkdir build_wrapper_output_directory
+          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir build_wrapper_output_directory make
+
+      - name: Run SonarQube Scanner
+        run: |
+          ./sonar-scanner-*/bin/sonar-scanner \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.host.url=https://sonarcloud.io

@@ -1,0 +1,46 @@
+# .github/workflows/sonarqube-dotnet.yml
+
+name: SonarQube Scan for .NET
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sonarqube:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Begin SonarQube analysis
+        run: |
+          dotnet sonarscanner begin \
+            /k:"YOUR_PROJECT_KEY" \
+            /n:"YOUR_PROJECT_NAME" \
+            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io"
+
+      - name: Restore and build
+        run: dotnet build
+
+      - name: Run tests with coverage (optional)
+        run: |
+          dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
+      - name: End SonarQube analysis
+        run: |
+          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
